@@ -20,32 +20,43 @@ coding: dict = dict()   # key  -> a letter
                         # item -> a binary encoding
 
 
-# STEP 0 - TODO
-## defining our data structures
-class Node: # NOT given to students
-    # TODO
-    
-    def __init__(self):
-        return
+# defining our data structures
+class Node:
+    def __init__(self, weight: int, letter: str, left = None, right = None):
+        self.weight: int = weight
+        self.letter: str = letter
 
-## defining operations
-### recursively traverses the huffman tree to record the codes
+        self.left: Node = left
+        self.right: Node = right
+
+    def __repr__(self):
+        return f'Node({self.weight}, {self.letter})'
+
+
+# recursively traverses the huffman tree to record the codes
 def retrieve_codes(v: Node, path: str=''):
     global coding
-    if v.letter != None: # if 'TODO': # TODO
-        coding[v.letter] = None # TODO
-    else:
-        retrieve_codes(None, None) # TODO
-        retrieve_codes(None, None) # TODO
 
-# STEP 1
-## counting the frequencies - TODO
+    if v.letter != None:
+        coding[v.letter] = path
+    else:
+        # Traverse left
+        retrieve_codes(v.left, path + '0')
+
+        # Traverse right
+        retrieve_codes(v.right, path + '1')
+
+
+for letter in message:
+    if not (letter in freq):
+        freq[letter] = 0
+
+    freq[letter] += 1
 
 
 # STEP 2
 ## initialize the nodes - TODO
-nodes = list()
-nodes.append(Node(0, 'a'))
+nodes = [Node(value, entry) for entry, value in freq.items()]
 
 # STEP 3 - TODO
 ## combine each nodes until there's only one item in the nodes list
@@ -60,7 +71,9 @@ while len(nodes) > 1:
     min_b: Node = nodes.pop()
 
     ## combine the two
-    combined: Node = None # TODO
+    combined: Node = Node(min_a.weight + min_b.weight, None)
+    combined.left = min_a
+    combined.right = min_b
 
     ## put the combined nodes back in the list of nodes
     nodes.append(combined)
@@ -69,7 +82,8 @@ while len(nodes) > 1:
 ## reconstruct the codes
 huff_root = nodes[0]
 retrieve_codes(huff_root)
-result: str = str() # TODO (hint coding[letter] -> code)
+result: str = ''.join([coding[letter] for letter in message])
+
 
 # STEP 5
 ## analyize compression performance

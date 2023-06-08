@@ -3,6 +3,7 @@
 ### get huffman.py working first, then work on this file
 
 import matplotlib.pyplot as plt
+import string
 
 # DATA - lyrics
 POKEMON_LYRICS = 'I wanna be the very best. Like no one ever was. To catch them is my real test. To train them is my cause. I will travel across the land. Searching far and wide. Each Pokemon to understand. The power that\'s inside. (Pokemon, gotta catch \'em all.) Its you and me. I know it\'s my destiny. (Pokemon.) Oh, you\'re my best friend. In a world we must defend. (Pokemon, gotta catch \'em all.) A heart so true. Our courage will pull us through. You teach me and I\'ll teach you. Pokemon. (gotta catch \'em all.) Gotta catch \'em all. Yeah. Every challenge along the way. With courage I will face. I will battle every day. To claim my rightful place. Come with me, the time is right. There\'s no better team. Arm in arm we\'ll win the fight. It\'s always been our dream. (Pokemon, gotta catch \'em all.) Its you and me. I know it\'s my destiny (Pokemon.) Oh, you\'re my best friend. In a world we must defend. (Pokemon, gotta catch \'em all.) A heart so true. Our courage will pull us through. You teach me and I\'ll teach you. Pokemon (gotta catch \'em all.) Gotta catch \'em all. Gotta catch \'em all. Gotta catch \'em all. Gotta catch \'em all. Yeah! (Pokemon, gotta catch \'em all). Its you and me. I know it\'s my destiny. (Pokemon) Oh, you\'re my best friend. In a world we must defend. (Pokemon, gotta catch \'em all.) A heart so true. Our courage will pull us through. You teach me and I\'ll teach you Pokemon. (gotta catch \'em all). Gotta catch \'em all. (Pokemon)'
@@ -13,6 +14,9 @@ ALPHABET = 'Now it\'s time for our wrap up. Let\'s give it everything we\'ve got
 GREEN_LATTERN = 'In brightest day, in blackest night, No evil shall escape my sight. Let those who worship evil\'s might, Beware my power... Green Lantern\'s light!'
 JEDI_CODE = 'Emotion, yet peace. Ignorance, yet knowledge. Passion, yet serenity. Chaos, yet harmony. Death, yet the Force.'
 SITH_CODE = 'Peace is a lie. There is only Passion. Through Passion, I gain Strength. Through Strength, I gain Power. Through Power, I gain Victory. Through Victory my chains are Broken. The Force shall free me.'
+
+# for storing the code for each letter
+coding: dict = dict()
 
 # the input, what we want to encode
 def huffman(message:str) -> float:
@@ -28,26 +32,70 @@ def huffman(message:str) -> float:
     # for holding the nodes of the huffman tree
     nodes: list = list() 
 
-    # for storing the code for each letter
-    coding: dict = dict()   # key  -> a letter
-                            # item -> a binary encoding
-
-
     # STEP 0
-    ## defining our data structures
-    ## defining operations
+    class Node:
+        def __init__(self, weight: int, letter: str, left = None, right = None):
+            self.weight: int = weight
+            self.letter: str = letter
+
+            self.left: Node = left
+            self.right: Node = right
+
+        def __repr__(self):
+            return f'Node({self.weight}, {self.letter})'
+
+    def retrieve_codes(v: Node, path: str=''):
+        global coding
+
+        if v.letter != None:
+            coding[v.letter] = path
+        else:
+            # Traverse left
+            retrieve_codes(v.left, path + '0')
+
+            # Traverse right
+            retrieve_codes(v.right, path + '1')
+
 
     # STEP 1
     ## counting the frequencies
+    for letter in message:
+        if not (letter in freq):
+            freq[letter] = 0
+
+        freq[letter] += 1
 
     # STEP 2
     ## initialize the nodes
+    nodes = [Node(value, entry) for entry, value in freq.items()]
 
     # STEP 3
     ## combine each nodes until there's only one item in the nodes list
+    while len(nodes) > 1:
+        ## sort based on weight
+        nodes.sort(key=lambda x: x.weight, reverse=True)
+
+        ## get the first min
+        min_a: Node = nodes.pop()
+
+        ## get the second min
+        min_b: Node = nodes.pop()
+
+        ## combine the two
+        combined: Node = Node(min_a.weight + min_b.weight, None)
+        combined.left = min_a
+        combined.right = min_b
+
+        ## put the combined nodes back in the list of nodes
+        nodes.append(combined)
 
     # STEP 4
     ## reconstruct the codes
+    huff_root = nodes[0]
+    retrieve_codes(huff_root)
+    
+    global coding
+    result: str = ''.join([coding[letter] for letter in message])
 
     # STEP 5
     ## analyize compression performance
@@ -59,7 +107,7 @@ def huffman(message:str) -> float:
 
 # LYRICS
 plt.subplot(2, 1, 1)
-plt.suptitle('Lab 7 - Stapleton Analyzing Huffman')
+plt.suptitle('Lab 7 - Naumoff Analyzing Huffman')
 
 MAX_N: int = int(128 * 3 / 2)
 
@@ -71,6 +119,8 @@ for i in range(1, MAX_N):
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
 
+plt.plot(ratios, label=f"Pokemon (n={MAX_N})")
+
 ## JIGGLE JIGGLE
 ratios: list = list()
 for i in range(1, MAX_N):
@@ -78,12 +128,18 @@ for i in range(1, MAX_N):
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
 
+plt.plot(ratios, label=f"Jiggle Jiggle (n={MAX_N})")
+
+
 ## ALPHABET
 ratios: list = list()
 for i in range(1, MAX_N):
     sub_message = ALPHABET[0:i]
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
+
+plt.plot(ratios, label=f"Alphabet (n={MAX_N})")
+plt.legend(loc="lower right")
 
 # PLOT 2
 plt.subplot(2, 1, 2)
@@ -95,6 +151,8 @@ for i in range(1, MAX_N):
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
 
+plt.plot(ratios, label=f"Sith Code (n={MAX_N})")
+
 ## GREEN LATERN'S OATH
 ratios: list = list()
 for i in range(1, MAX_N):
@@ -102,9 +160,19 @@ for i in range(1, MAX_N):
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
 
+plt.plot(ratios, label=f"Green Latern's Oath (n={MAX_N})")
+
 ## JEDI CODE
 ratios: list = list()
 for i in range(1, MAX_N):
     sub_message = JEDI_CODE[0:i]
     _, _, ratio = huffman(sub_message)
     ratios.append(ratio)
+
+plt.plot(ratios, label=f"Jedi Code (n={MAX_N})")
+
+plt.ylabel("compression %")
+plt.xlabel("message length")
+plt.legend(loc="lower right")
+plt.savefig("figs/lab7_naumoff.png")
+ 
